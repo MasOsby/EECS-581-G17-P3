@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://0dhdb1wg8j67"]
+
+[ext_resource type="Texture2D" uid="uid://gj8p1rv1vee7" path="res://assets/Old Dungeon/OldDungeon.png" id="1_bexhn"]
+
+[node name="Level" type="Node2D" unique_id=147092125]
+
+[node name="Node2D" type="Node2D" parent="." unique_id=1047716178]
+
+[node name="Background" type="Sprite2D" parent="Node2D" unique_id=1987323767]
+position = Vector2(0, -1)
+texture = ExtResource("1_bexhn")
