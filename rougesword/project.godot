@@ -15,5 +15,22 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 [application]
 
 config/name="RougeSword"
+run/main_scene="res://MainMenu.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.svg"
+
+[autoload]
+
+GameState="*res://scripts/game_state.gd"
+SceneManager="*res://scripts/scene_manager.gd"
+
+[display]
+
+window/size/viewport_width=640
+window/size/viewport_height=480
+window/stretch/mode="viewport"
+window/stretch/scale_mode="integer"
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
