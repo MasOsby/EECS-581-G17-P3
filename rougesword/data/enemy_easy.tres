@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="EnemyData" format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+enemy_name = "Basic Enemy"
+health = 1
+base_damage = 1
+speed = 1
+tint = Color(1, 0.6, 0.6, 1)

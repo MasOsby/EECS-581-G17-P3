@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="EnemyData" format=3 uid="uid://luyjop3qswpv"]
+
+[ext_resource type="Script" uid="uid://bqtlondcgoc38" path="res://scripts/enemy_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+enemy_name = "Basic Enemy (Hard)"
+health = 10
+base_damage = 99
+tint = Color(1, 0.3, 0.3, 1)
