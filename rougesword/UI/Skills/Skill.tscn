@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://ct3a4l5xcy4aa"]
+
+[ext_resource type="Texture2D" uid="uid://dm3jrd52d22v" path="res://UI/Skills/Defense/Block.tres" id="1_tepwi"]
+[ext_resource type="Script" uid="uid://0hm74hmjbpd" path="res://UI/Skills/skill_button.gd" id="2_ihra8"]
+
+[node name="SkillButton" type="TextureButton" unique_id=1218115956]
+offset_right = 39.0
+offset_bottom = 36.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+toggle_mode = true
+texture_normal = ExtResource("1_tepwi")
+ignore_texture_size = true
+script = ExtResource("2_ihra8")
+
+[node name="Panel" type="Panel" parent="." unique_id=1381339084]
+layout_mode = 1
+offset_right = 36.0
+offset_bottom = 35.0
+mouse_filter = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=333515043]
+layout_mode = 1
+offset_right = 35.0
+offset_bottom = 33.8
+
+[node name="Label" type="Label" parent="MarginContainer" unique_id=180030576]
+layout_mode = 2
+size_flags_vertical = 8
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 12
+text = "0/1"
+horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="Line2D" type="Line2D" parent="." unique_id=1751081610]
+top_level = true
+z_index = -1
+width = 3.0
+default_color = Color(0.7133139, 0.70682305, 0.7012642, 1)
+
+[connection signal="pressed" from="." to="." method="_on_pressed"]
