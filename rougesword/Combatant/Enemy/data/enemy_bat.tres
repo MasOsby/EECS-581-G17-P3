@@ -1,9 +1,9 @@
-class_name EnemyData
-extends Resource
-## Enemy stats stored as a data resource (.tres), so new enemies need no code changes.
+[gd_resource type="Resource" script_class="EnemyData" format=3 uid="uid://dx43vh6avbhi4"]
 
-@export var enemy_name: String = "Enemy"
-@export var health: int = 1
-@export var base_damage: int = 1
-@export var speed: int = 1
-@export var tint: Color = Color.WHITE
+[ext_resource type="Script" uid="uid://bqtlondcgoc38" path="res://Combatant/Enemy/data/enemy_data.gd" id="1_uk61j"]
+
+[resource]
+script = ExtResource("1_uk61j")
+enemy_name = "Bat"
+health = 4
+tint = Color(1, 0.6, 0.6, 1)
