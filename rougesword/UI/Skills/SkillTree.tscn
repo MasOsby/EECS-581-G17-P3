@@ -1,0 +1,175 @@
+[gd_scene format=3 uid="uid://dnqrhhys0yuow"]
+
+[ext_resource type="PackedScene" uid="uid://ct3a4l5xcy4aa" path="res://UI/Skills/Skill.tscn" id="1_sksvy"]
+[ext_resource type="Texture2D" uid="uid://bslfcnj5hceky" path="res://UI/Skills/Defense/Cleanse.tres" id="2_gydup"]
+[ext_resource type="Texture2D" uid="uid://dklfvke0a26l4" path="res://UI/Skills/Defense/Parry.tres" id="3_8sfsl"]
+[ext_resource type="Texture2D" uid="uid://h6pgd8e4qy2" path="res://UI/Skills/Defense/SuperBlock.tres" id="4_vfgld"]
+[ext_resource type="Texture2D" uid="uid://b2ikul55wlkfk" path="res://UI/Skills/Attack/HeavyStrike.tres" id="5_dpvwx"]
+[ext_resource type="Texture2D" uid="uid://c0ajfvpm4n1f8" path="res://UI/Skills/Attack/Titan_Cleave.tres" id="6_pa05u"]
+[ext_resource type="Texture2D" uid="uid://b4hewm1it222q" path="res://UI/Skills/Attack/Execute.tres" id="7_kr7iy"]
+[ext_resource type="Texture2D" uid="uid://c6fkwturc6ks6" path="res://UI/Skills/Attack/Flurry.tres" id="8_7lu6p"]
+[ext_resource type="Texture2D" uid="uid://cx05ba3p6sa52" path="res://UI/Skills/Special/Sweep.tres" id="9_bcist"]
+[ext_resource type="Texture2D" uid="uid://6316to4lrq2p" path="res://UI/Skills/Special/FlameStrike.tres" id="10_ha6vq"]
+[ext_resource type="Texture2D" uid="uid://yb4vu57jqh5e" path="res://UI/Skills/Special/PoisonStrike.tres" id="11_2e6g7"]
+[ext_resource type="Texture2D" uid="uid://clnt1lyxb46m" path="res://UI/Skills/Special/Disarm.tres" id="12_ph8pw"]
+[ext_resource type="Script" uid="uid://dv5p2avsmmjw8" path="res://UI/Skills/back.gd" id="13_ha6vq"]
+
+[node name="SkillTree" type="Control" unique_id=1337796242]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = 1.0
+offset_right = 2.0
+offset_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="." unique_id=1683406314]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HeavyStrike" parent="Panel" unique_id=872727039 instance=ExtResource("1_sksvy")]
+layout_mode = 0
+offset_left = 504.0
+offset_top = 187.0
+offset_right = 544.0
+offset_bottom = 227.0
+texture_normal = ExtResource("5_dpvwx")
+
+[node name="Label2" type="Label" parent="Panel/HeavyStrike" unique_id=785979526]
+layout_mode = 0
+offset_left = -7.0
+offset_top = -171.0
+offset_right = 43.0
+offset_bottom = -148.0
+text = "Attack"
+
+[node name="TitanCleave" parent="Panel/HeavyStrike" unique_id=1234010483 instance=ExtResource("1_sksvy")]
+layout_mode = 0
+offset_left = 1.0
+offset_top = -74.0
+offset_right = 41.0
+offset_bottom = -34.0
+disabled = true
+texture_normal = ExtResource("6_pa05u")
+
+[node name="Flurry" parent="Panel/HeavyStrike/TitanCleave" unique_id=1923320788 instance=ExtResource("1_sksvy")]
+layout_mode = 0
+offset_left = 46.0
+offset_top = -78.0
+offset_right = 86.0
+offset_bottom = -38.0
+disabled = true
+texture_normal = ExtResource("7_kr7iy")
+
+[node name="Execute" parent="Panel/HeavyStrike/TitanCleave" unique_id=1787700075 instance=ExtResource("1_sksvy")]
+layout_mode = 0
+offset_left = -54.0
+offset_top = -76.0
+offset_right = -14.0
+offset_bottom = -36.0
+disabled = true
+texture_normal = ExtResource("8_7lu6p")
+
+[node name="Block" parent="Panel" unique_id=1218115956 instance=ExtResource("1_sksvy")]
+layout_mode = 0
+offset_left = 88.0
+offset_top = 191.0
+offset_right = 128.0
+offset_bottom = 231.0
+
+[node name="Label" type="Label" parent="Panel/Block" unique_id=341117251]
+layout_mode = 0
+offset_left = -19.0
+offset_top = -175.0
+offset_right = 45.0
+offset_bottom = -152.0
+text = "Defense"
+
+[node name="Cleanse" parent="Panel/Block" unique_id=1827933195 instance=ExtResource("1_sksvy")]
+layout_mode = 0
+offset_left = 1.0
+offset_top = -74.0
+offset_right = 41.0
+offset_bottom = -34.0
+disabled = true
+texture_normal = ExtResource("2_gydup")
+
+[node name="Parry" parent="Panel/Block/Cleanse" unique_id=787524924 instance=ExtResource("1_sksvy")]
+layout_mode = 0
+offset_left = 46.0
+offset_top = -78.0
+offset_right = 86.0
+offset_bottom = -38.0
+disabled = true
+texture_normal = ExtResource("3_8sfsl")
+
+[node name="SuperBlock" parent="Panel/Block/Cleanse" unique_id=2021733073 instance=ExtResource("1_sksvy")]
+layout_mode = 0
+offset_left = -54.0
+offset_top = -76.0
+offset_right = -14.0
+offset_bottom = -36.0
+disabled = true
+texture_normal = ExtResource("4_vfgld")
+
+[node name="SweepStrike" parent="Panel" unique_id=1769888459 instance=ExtResource("1_sksvy")]
+layout_mode = 0
+offset_left = 293.0
+offset_top = 415.0
+offset_right = 333.0
+offset_bottom = 455.0
+texture_normal = ExtResource("9_bcist")
+
+[node name="Label3" type="Label" parent="Panel/SweepStrike" unique_id=1449438360]
+layout_mode = 0
+offset_left = -8.0
+offset_top = -185.0
+offset_right = 47.0
+offset_bottom = -162.0
+text = "Special"
+
+[node name="FlameStrike" parent="Panel/SweepStrike" unique_id=1438305195 instance=ExtResource("1_sksvy")]
+layout_mode = 0
+offset_left = 1.0
+offset_top = -74.0
+offset_right = 41.0
+offset_bottom = -34.0
+disabled = true
+texture_normal = ExtResource("10_ha6vq")
+
+[node name="PoisonStrike" parent="Panel/SweepStrike/FlameStrike" unique_id=1108118477 instance=ExtResource("1_sksvy")]
+layout_mode = 0
+offset_left = 46.0
+offset_top = -78.0
+offset_right = 86.0
+offset_bottom = -38.0
+disabled = true
+texture_normal = ExtResource("11_2e6g7")
+
+[node name="Disarm" parent="Panel/SweepStrike/FlameStrike" unique_id=68079483 instance=ExtResource("1_sksvy")]
+layout_mode = 0
+offset_left = -54.0
+offset_top = -76.0
+offset_right = -14.0
+offset_bottom = -36.0
+disabled = true
+texture_normal = ExtResource("12_ph8pw")
+
+[node name="BackButton" type="Button" parent="." unique_id=621004857]
+layout_mode = 0
+offset_left = 17.0
+offset_top = 431.0
+offset_right = 76.0
+offset_bottom = 462.0
+text = "< Back"
+script = ExtResource("13_ha6vq")
+
+[connection signal="pressed" from="BackButton" to="BackButton" method="_on_pressed"]
