@@ -22,10 +22,19 @@ func _ready() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(title)
 
+	var seed_input := LineEdit.new()
+	seed_input.placeholder_text = "Seed (optional)"
+	seed_input.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	seed_input.custom_minimum_size = Vector2(160, 32)
+	box.add_child(seed_input)
+
 	var play := Button.new()
 	play.text = "Play"
 	play.custom_minimum_size = Vector2(160, 40)
-	play.pressed.connect(GameState.start_run)
+	play.pressed.connect(func():
+		var text := seed_input.text.strip_edges()
+		# A valid seed replays that map; anything else picks a random one.
+		GameState.start_run(int(text) if text.is_valid_int() and int(text) >= 0 else -1))
 	box.add_child(play)
 
 	var quit := Button.new()

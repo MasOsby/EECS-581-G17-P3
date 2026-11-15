@@ -23,11 +23,22 @@ func _ready() -> void:
 	box.add_child(title)
 
 	var button := Button.new()
-	button.text = "Go Onward"
 	button.custom_minimum_size = Vector2(180, 40)
+	if GameState.run_complete:
+		# Reached the boss: the run is over, so no Go Onward / Skills here.
+		var note := Label.new()
+		note.text = "You conquered the dungeon!\nSeed: %d" % GameState.run_seed
+		note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		box.add_child(note)
+		button.text = "Return to Main Menu"
+		button.custom_minimum_size = Vector2(220, 40)
+		button.pressed.connect(func(): GameState.change_state(GameState.State.MAIN_MENU))
+		box.add_child(button)
+		return
+	button.text = "Go Onward"
 	button.pressed.connect(func(): GameState.change_state(GameState.State.MAP))
 	box.add_child(button)
-	
+
 	var skill_tree := Button.new()
 	skill_tree.text = "Skills"
 	skill_tree.custom_minimum_size = Vector2(180, 40)
