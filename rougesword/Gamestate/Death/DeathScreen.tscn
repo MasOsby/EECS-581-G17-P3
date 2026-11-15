@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://qlyahuqswkbm"]
+
+[ext_resource type="Script" uid="uid://cr7r7pjgo5q3" path="res://Gamestate/Death/death_screen.gd" id="1_x02q5"]
+
+[node name="DeathScreen" type="Control" unique_id=563194497]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_x02q5")
