@@ -7,3 +7,7 @@ extends Resource
 @export var base_damage: int = 1
 @export var speed: int = 1
 @export var tint: Color = Color.WHITE
+
+#Init enemy drops
+@export var gold_reward: int = 1
+@export var xp_reward: int = 1

@@ -33,7 +33,7 @@ window/stretch/scale_mode="integer"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/skill_tree_kit/plugin.cfg")
+enabled=PackedStringArray()
 
 [rendering]
 

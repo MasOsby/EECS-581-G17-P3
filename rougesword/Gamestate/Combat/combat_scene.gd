@@ -5,6 +5,12 @@ extends Control
 const SWORDSMAN := preload("res://Combatant/Player/Swordsman.tscn")
 const ENEMY_BASIC := preload("res://Combatant/Enemy/Bat.tscn")
 const BACKGROUND := preload("res://assets/Old Dungeon/OldDungeon320X180.png")
+const HUD := preload("res://UI/HUD/HUD.tscn")
+
+const BAR_TEXTURE:= preload("res://assets/UI/healthbar.tres")
+const HEALTHBAR_PROGRESS := preload("res://assets/UI/healthbar_progress.tres")
+const XP_BAR_PROGRESS := preload("res://assets/UI/xp_progress.tres")
+
 var _manager := CombatManager.new()
 var _player: Player
 var _enemy: Enemy
@@ -12,11 +18,14 @@ var _player_sprite: AnimatedSprite2D
 var _enemy_sprite: AnimatedSprite2D
 var _player_bar: TextureProgressBar
 var _enemy_bar: TextureProgressBar
+var _player_xp: TextureProgressBar
+var _player_xp_label: Label
 var _player_hp_label: Label
 var _enemy_hp_label: Label
 var _turn_label: Label
 var _menu: PanelContainer
 var _fade: ColorRect
+var hud: CanvasLayer
 
 func _ready() -> void:
 	var data := GameState.current_enemy_data()
@@ -28,10 +37,17 @@ func _ready() -> void:
 	_manager.combat_finished.connect(_on_combat_finished)
 	_player.health_changed.connect(_on_player_health_changed)
 	_enemy.health_changed.connect(_on_enemy_health_changed)
-
+	
+	_player.xp_changed.connect(_on_player_xp_changed)
+	
+	hud = HUD.instantiate()
+	add_child(hud)
+	hud.bind_player(_player)
+	
 	_build_scene(data)
-	_update_bar(_player_bar, _player_hp_label, _player.health, _player.max_health)
-	_update_bar(_enemy_bar, _enemy_hp_label, _enemy.health, _enemy.max_health)
+	_update_bar(_player_bar, _player_hp_label, _player.health, _player.max_health, "HP")
+	_update_bar(_enemy_bar, _enemy_hp_label, _enemy.health, _enemy.max_health, "HP")
+	_update_bar(_player_xp, _player_xp_label, _player.xp, _player.max_xp, "XP")
 	_update_turn_label()
 
 func _build_scene(data: EnemyData) -> void:
@@ -51,10 +67,17 @@ func _build_scene(data: EnemyData) -> void:
 	_enemy_sprite = _make_enemy(Vector2(470, 195), true, data.tint)
 
 	# Swordsman health bar (below the swordsman)
-	_player_bar = _make_bar(Vector2(100, 305))
-	_player_hp_label = _make_bar_label(Vector2(100, 322), _player_bar)
+	_player_bar = _make_bar(Vector2(100, 302), BAR_TEXTURE, HEALTHBAR_PROGRESS)
+	_player_hp_label = _make_bar_label(Vector2(100, 320), _player_bar)
+	#Swordsman xp bar (vertical on edge of screen)
+	_player_xp = _make_bar(Vector2(20,310), BAR_TEXTURE, XP_BAR_PROGRESS)
+	_player_xp.fill_mode = TextureProgressBar.FILL_LEFT_TO_RIGHT
+	_player_xp.texture_progress_offset = Vector2(7,1.5)
+	_player_xp.rotation_degrees = -90
+	_player_xp_label = _make_bar_label(Vector2(20, 320), _player_xp)
+	
 	# Enemy health bar (below the enemy)
-	_enemy_bar = _make_bar(Vector2(400, 305))
+	_enemy_bar = _make_bar(Vector2(400, 305), BAR_TEXTURE, HEALTHBAR_PROGRESS)
 	_enemy_hp_label = _make_bar_label(Vector2(400, 322), _enemy_bar)
 
 	var name_p := Label.new()
@@ -113,14 +136,13 @@ func _make_enemy(pos: Vector2, _flip: bool, tint: Color) -> AnimatedSprite2D:
 	sprite.play("Idle")
 	return sprite
 
-func _make_bar(pos: Vector2) -> TextureProgressBar:
+func _make_bar(pos: Vector2, under: Texture2D, progress: Texture2D) -> TextureProgressBar:
 	var bar := TextureProgressBar.new()
-	
 	bar.position = pos
 	
-	#Load Health bar sprites
-	bar.texture_under = preload("res://assets/UI/healthbar.tres")
-	bar.texture_progress = preload("res://assets/UI/healthbar_progress.tres")
+	#Load texture progress bar sprites
+	bar.texture_under = under
+	bar.texture_progress = progress
 	
 	#Size and scale
 	bar.texture_progress_offset = Vector2(2,2)
@@ -137,21 +159,25 @@ func _make_bar_label(pos: Vector2, _bar: TextureProgressBar) -> Label:
 	add_child(label)
 	return label
 
-func _update_bar(bar: TextureProgressBar, label: Label, current: int, maximum: int) -> void:
+func _update_bar(bar: TextureProgressBar, label: Label, current: int, maximum: int, text: String) -> void:
 	bar.max_value = maximum
 	bar.value = current
-	label.text = "HP %d / %d" % [current, maximum]
-
+	label.text = "%s %d / %d" % [text, current, maximum]
+	
 func _update_turn_label() -> void:
 	var who := "Swordsman's turn" if _manager.turn == CombatManager.Turn.PLAYER_TURN else "Enemy's turn"
 	_turn_label.text = "Turn %d - %s" % [_manager.turn_indicator, who]
 
 func _on_player_health_changed(current: int, maximum: int) -> void:
-	_update_bar(_player_bar, _player_hp_label, current, maximum)
+	_update_bar(_player_bar, _player_hp_label, current, maximum, "HP")
 	GameState.player_health = current
 
 func _on_enemy_health_changed(current: int, maximum: int) -> void:
-	_update_bar(_enemy_bar, _enemy_hp_label, current, maximum)
+	_update_bar(_enemy_bar, _enemy_hp_label, current, maximum, "HP")
+	
+func _on_player_xp_changed(current: int, maximum: int) -> void:
+	_update_bar(_player_xp, _player_xp_label, current, maximum, "XP")
+	GameState.player_xp = current
 
 func _on_turn_changed(_turn: CombatManager.Turn) -> void:
 	_update_turn_label()
@@ -176,7 +202,22 @@ func _on_attack_pressed() -> void:
 func _on_combat_finished(player_won: bool) -> void:
 	_update_turn_label()
 	if player_won:
+		#Enemy death animation
 		create_tween().tween_property(_enemy_sprite, "modulate:a", 0.0, 0.6)
+		
+		#Update Player gold and xp
+		_player.gold += _enemy.gold_reward
+		_player.gain_xp(_enemy.xp_reward)
+		
+		#Persist Player stats across encounters
+		GameState.player_gold = _player.gold
+		GameState.player_xp = _player.xp
+		GameState.player_max_xp = _player.max_xp
+		GameState.player_level = _player.level
+		GameState.player_skillpts = _player.skill_pts
+		
+		await get_tree().create_timer(2).timeout
+		
 	else:
 		create_tween().tween_property(_player_sprite, "modulate:a", 0.0, 0.6)
 	await get_tree().create_timer(0.9).timeout

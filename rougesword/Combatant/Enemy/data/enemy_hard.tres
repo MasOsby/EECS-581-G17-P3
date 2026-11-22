@@ -8,3 +8,5 @@ enemy_name = "Basic Enemy (Hard)"
 health = 10
 base_damage = 99
 tint = Color(1, 0.3, 0.3, 1)
+gold_reward = 8
+xp_reward = 10
