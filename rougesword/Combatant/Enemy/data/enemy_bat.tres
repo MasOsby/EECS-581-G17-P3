@@ -7,3 +7,5 @@ script = ExtResource("1_uk61j")
 enemy_name = "Bat"
 health = 4
 tint = Color(1, 0.6, 0.6, 1)
+gold_reward = 3
+xp_reward = 5
