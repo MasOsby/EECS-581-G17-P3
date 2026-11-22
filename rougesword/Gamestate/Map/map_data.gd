@@ -11,17 +11,26 @@ const NODE_SPAWN_CHANCE := 0.75
 const JITTER_X := 16.0
 const JITTER_Y := 14.0
 const TYPE_WEIGHTS := {"fight": 60, "shop": 25, "rest": 15}
-## Encounter path plus early / mid / late weights. Progress is
-## (tier - 1) / (boss_tier - 2): 0-0.33 early, 0.34-0.67 mid, 0.68-1 late.
-## Future rows can add knight / archer compositions without code changes.
-## Always used for the opening tier (tier 1).
+## Encounters now use an attached difficulty value present in the encounter's .tres file
+## That difficulty is used to roll an encounter near difficulty that current stage should have.
 const FIRST_ENCOUNTER := "res://Combatant/Enemy/encounters/one_bat.tres"
-const ENCOUNTER_TABLE := [
-	["res://Combatant/Enemy/encounters/one_bat.tres", 12, 4, 0],
-	["res://Combatant/Enemy/encounters/two_bats.tres", 4, 8, 3],
-	["res://Combatant/Enemy/encounters/one_brute.tres", 0, 6, 8],
-	["res://Combatant/Enemy/encounters/brute_and_bat.tres", 0, 3, 10],
+const ENCOUNTER_PATHS := [
+	"res://Combatant/Enemy/encounters/one_bat.tres",
+	"res://Combatant/Enemy/encounters/two_bats.tres",
+	"res://Combatant/Enemy/encounters/one_brute.tres",
+	"res://Combatant/Enemy/encounters/three_bats.tres",
+	"res://Combatant/Enemy/encounters/brute_and_bat.tres",
+	"res://Combatant/Enemy/encounters/two_brutes.tres",
 ]
+
+##Encounters are selected by tier vs difficulty within a range
+const TARGET_START := 1.0   # target difficulty at tier 1
+const TARGET_STEP := 0.6    # extra difficulty per tier; the main number to tune
+const DIFFICULTY_RANGE := 0.9
+
+func _target_difficulty(tier: int) -> float:
+	return TARGET_START + (tier - 1) * TARGET_STEP
+
 
 var map_seed: int = 0
 var tier_count: int = 0
@@ -306,33 +315,21 @@ func _assign_encounters() -> void:
 			else:
 				n.encounter_path = _roll_encounter(n.tier)
 
-func _progress_for_tier(tier: int) -> float:
-	var boss_tier := float(tier_count - 1)
-	var denom := boss_tier - 2.0
-	if denom <= 0.0:
-		return 1.0
-	return clampf(float(tier - 1) / denom, 0.0, 1.0)
-
-func _stage_index(progress: float) -> int:
-	if progress <= 0.33:
-		return 1 # early
-	if progress <= 0.67:
-		return 2 # mid
-	return 3 # late
-
 func _roll_encounter(tier: int) -> String:
-	var stage := _stage_index(_progress_for_tier(tier))
-	var total := 0
-	for row in ENCOUNTER_TABLE:
-		total += int(row[stage])
-	if total <= 0:
-		return String(ENCOUNTER_TABLE[0][0])
-	var roll := _rng.randi_range(0, total - 1)
-	for row in ENCOUNTER_TABLE:
-		roll -= int(row[stage])
-		if roll < 0:
-			return String(row[0])
-	return String(ENCOUNTER_TABLE[0][0])
+	var target := _target_difficulty(tier)
+	var candidates: Array[String] = []
+	var nearest := String(ENCOUNTER_PATHS[0])
+	var nearest_gap := INF
+	for path in ENCOUNTER_PATHS:
+		var gap := absf((load(path) as EncounterData).difficulty - target)
+		if gap <= DIFFICULTY_RANGE:
+			candidates.append(path)
+		if gap < nearest_gap:
+			nearest_gap = gap
+			nearest = path
+	if candidates.is_empty():
+		return nearest
+	return candidates[_rng.randi_range(0, candidates.size() - 1)]
 
 ## Text fingerprint of the whole map, used to compare two maps for equality.
 func signature() -> String:

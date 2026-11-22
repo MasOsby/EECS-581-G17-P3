@@ -10,3 +10,4 @@ extends Resource
 @export_file("*.tscn") var scene_path: String = "res://Combatant/Enemy/Bat.tscn"
 @export var sprite_scale: Vector2 = Vector2(2, 2)
 @export var flip_h: bool = false
+@export var difficulty_cost: float = 1.0

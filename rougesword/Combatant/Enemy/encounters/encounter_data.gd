@@ -4,3 +4,4 @@ extends Resource
 
 @export var encounter_name: String = "Encounter"
 @export var enemies: Array[EnemyData] = []
+@export var difficulty: float = 1.0    #default difficulty

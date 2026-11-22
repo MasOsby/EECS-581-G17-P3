@@ -6,4 +6,5 @@
 [resource]
 script = ExtResource("1_script")
 encounter_name = "1 Ogre"
+difficulty = 2.2
 enemies = Array[EnemyData]([ExtResource("2_ogre")])
