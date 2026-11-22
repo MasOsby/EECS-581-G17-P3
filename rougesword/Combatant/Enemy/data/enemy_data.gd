@@ -7,3 +7,6 @@ extends Resource
 @export var base_damage: int = 1
 @export var speed: int = 1
 @export var tint: Color = Color.WHITE
+@export_file("*.tscn") var scene_path: String = "res://Combatant/Enemy/Bat.tscn"
+@export var sprite_scale: Vector2 = Vector2(2, 2)
+@export var flip_h: bool = false

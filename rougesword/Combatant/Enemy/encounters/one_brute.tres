@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="EncounterData" format=3 uid="uid://cenc1brute0000"]
+
+[ext_resource type="Script" uid="uid://bencountern0data" path="res://Combatant/Enemy/encounters/encounter_data.gd" id="1_script"]
+[ext_resource type="Resource" uid="uid://denemyogrebrute1" path="res://Combatant/Enemy/data/enemy_ogre.tres" id="2_ogre"]
+
+[resource]
+script = ExtResource("1_script")
+encounter_name = "1 Ogre"
+enemies = Array[EnemyData]([ExtResource("2_ogre")])

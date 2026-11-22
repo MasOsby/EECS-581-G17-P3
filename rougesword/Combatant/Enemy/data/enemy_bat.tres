@@ -7,3 +7,6 @@ script = ExtResource("1_uk61j")
 enemy_name = "Bat"
 health = 4
 tint = Color(1, 0.6, 0.6, 1)
+scene_path = "res://Combatant/Enemy/Bat.tscn"
+sprite_scale = Vector2(2, 2)
+flip_h = false

@@ -11,7 +11,17 @@ const NODE_SPAWN_CHANCE := 0.75
 const JITTER_X := 16.0
 const JITTER_Y := 14.0
 const TYPE_WEIGHTS := {"fight": 60, "shop": 25, "rest": 15}
-const ENEMY_POOL := ["res://Combatant/Enemy/data/enemy_bat.tres"]
+## Encounter path plus early / mid / late weights. Progress is
+## (tier - 1) / (boss_tier - 2): 0-0.33 early, 0.34-0.67 mid, 0.68-1 late.
+## Future rows can add knight / archer compositions without code changes.
+## Always used for the opening tier (tier 1).
+const FIRST_ENCOUNTER := "res://Combatant/Enemy/encounters/one_bat.tres"
+const ENCOUNTER_TABLE := [
+	["res://Combatant/Enemy/encounters/one_bat.tres", 12, 4, 0],
+	["res://Combatant/Enemy/encounters/two_bats.tres", 4, 8, 3],
+	["res://Combatant/Enemy/encounters/one_brute.tres", 0, 6, 8],
+	["res://Combatant/Enemy/encounters/brute_and_bat.tres", 0, 3, 10],
+]
 
 var map_seed: int = 0
 var tier_count: int = 0
@@ -39,7 +49,7 @@ func _build(seed_value: int) -> void:
 	_connect_tiers()
 	repair()
 	_assign_types()
-	_assign_enemies()
+	_assign_encounters()
 	var problems := validate()
 	if not problems.is_empty():
 		push_error("Map for seed %d is invalid: %s" % [seed_value, ", ".join(problems)])
@@ -287,14 +297,46 @@ func _ensure_shop() -> void:
 	var pick: int = candidates[_rng.randi_range(0, candidates.size() - 1)]
 	nodes[pick].type = "shop"
 
-func _assign_enemies() -> void:
+func _assign_encounters() -> void:
 	for n in nodes:
 		if n.type == "fight":
-			n.enemy_path = ENEMY_POOL[_rng.randi_range(0, ENEMY_POOL.size() - 1)]
+			# Always make first fight 1 bat
+			if n.tier == 1:
+				n.encounter_path = FIRST_ENCOUNTER
+			else:
+				n.encounter_path = _roll_encounter(n.tier)
+
+func _progress_for_tier(tier: int) -> float:
+	var boss_tier := float(tier_count - 1)
+	var denom := boss_tier - 2.0
+	if denom <= 0.0:
+		return 1.0
+	return clampf(float(tier - 1) / denom, 0.0, 1.0)
+
+func _stage_index(progress: float) -> int:
+	if progress <= 0.33:
+		return 1 # early
+	if progress <= 0.67:
+		return 2 # mid
+	return 3 # late
+
+func _roll_encounter(tier: int) -> String:
+	var stage := _stage_index(_progress_for_tier(tier))
+	var total := 0
+	for row in ENCOUNTER_TABLE:
+		total += int(row[stage])
+	if total <= 0:
+		return String(ENCOUNTER_TABLE[0][0])
+	var roll := _rng.randi_range(0, total - 1)
+	for row in ENCOUNTER_TABLE:
+		roll -= int(row[stage])
+		if roll < 0:
+			return String(row[0])
+	return String(ENCOUNTER_TABLE[0][0])
 
 ## Text fingerprint of the whole map, used to compare two maps for equality.
 func signature() -> String:
 	var parts := PackedStringArray(["%d|%d" % [tier_count, lane_count]])
 	for n in nodes:
-		parts.append("%d:%s:%s:%s" % [n.id, n.type, n.enemy_path, str(n.next)])
+		parts.append("%d:%s:%s:%s" % [n.id, n.type, n.encounter_path, str(n.next)])
 	return ";".join(parts)

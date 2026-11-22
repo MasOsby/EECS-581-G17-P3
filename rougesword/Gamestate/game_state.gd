@@ -40,5 +40,5 @@ func change_state(new_state: State) -> void:
 	state = new_state
 	state_changed.emit(new_state)
 
-func current_enemy_data() -> EnemyData:
-	return load(map.nodes[current_node].enemy_path) as EnemyData
+func current_encounter() -> EncounterData:
+	return load(map.nodes[current_node].encounter_path) as EncounterData

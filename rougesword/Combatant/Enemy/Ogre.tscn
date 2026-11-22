@@ -1,0 +1,67 @@
+[gd_scene format=3 uid="uid://cogrescene00001"]
+
+[ext_resource type="Texture2D" path="res://assets/Enemies/Ogre/ogre-attack1.png" id="atk1"]
+[ext_resource type="Texture2D" path="res://assets/Enemies/Ogre/ogre-attack2.png" id="atk2"]
+[ext_resource type="Texture2D" path="res://assets/Enemies/Ogre/ogre-attack3.png" id="atk3"]
+[ext_resource type="Texture2D" path="res://assets/Enemies/Ogre/ogre-attack4.png" id="atk4"]
+[ext_resource type="Texture2D" path="res://assets/Enemies/Ogre/ogre-attack5.png" id="atk5"]
+[ext_resource type="Texture2D" path="res://assets/Enemies/Ogre/ogre-attack6.png" id="atk6"]
+[ext_resource type="Texture2D" path="res://assets/Enemies/Ogre/ogre-attack7.png" id="atk7"]
+[ext_resource type="Texture2D" path="res://assets/Enemies/Ogre/ogre-idle1.png" id="idle1"]
+[ext_resource type="Texture2D" path="res://assets/Enemies/Ogre/ogre-idle2.png" id="idle2"]
+[ext_resource type="Texture2D" path="res://assets/Enemies/Ogre/ogre-idle3.png" id="idle3"]
+[ext_resource type="Texture2D" path="res://assets/Enemies/Ogre/ogre-idle4.png" id="idle4"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ogre"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("atk1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("atk2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("atk3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("atk4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("atk5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("atk6")
+}, {
+"duration": 1.0,
+"texture": ExtResource("atk7")
+}],
+"loop": false,
+"name": &"Attack",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("idle1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("idle2")
+}, {
+"duration": 1.0,
+"texture": ExtResource("idle3")
+}, {
+"duration": 1.0,
+"texture": ExtResource("idle4")
+}],
+"loop": true,
+"name": &"Idle",
+"speed": 6.0
+}]
+
+[node name="Ogre" type="Node2D"]
+
+[node name="CharacterBody2D" type="CharacterBody2D" parent="."]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="CharacterBody2D"]
+sprite_frames = SubResource("SpriteFrames_ogre")
+animation = &"Idle"
