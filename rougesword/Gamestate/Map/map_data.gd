@@ -11,9 +11,15 @@ const NODE_SPAWN_CHANCE := 0.75
 const JITTER_X := 16.0
 const JITTER_Y := 14.0
 const TYPE_WEIGHTS := {"fight": 60, "shop": 25, "rest": 15}
+
+#const FIRST_ENCOUNTER := "res://Combatant/Enemy/encounters/one_bat.tres"
+# Can switch to test an encounter.
+const FIRST_ENCOUNTER := "res://Combatant/Enemy/encounters/three_brutes.tres"
+#const FIRST_ENCOUNTER := "res://Combatant/Enemy/encounters/brute_and_bat.tres"
+
+
 ## Encounters now use an attached difficulty value present in the encounter's .tres file
 ## That difficulty is used to roll an encounter near difficulty that current stage should have.
-const FIRST_ENCOUNTER := "res://Combatant/Enemy/encounters/one_bat.tres"
 const ENCOUNTER_PATHS := [
 	"res://Combatant/Enemy/encounters/one_bat.tres",
 	"res://Combatant/Enemy/encounters/two_bats.tres",

@@ -63,5 +63,7 @@ animations = [{
 [node name="CharacterBody2D" type="CharacterBody2D" parent="."]
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="CharacterBody2D"]
+position = Vector2(0, 0)
+scale = Vector2(1, 1)
 sprite_frames = SubResource("SpriteFrames_ogre")
 animation = &"Idle"

@@ -6,6 +6,12 @@ const SWORDSMAN := preload("res://Combatant/Player/Swordsman.tscn")
 const FALLBACK_ENEMY := preload("res://Combatant/Enemy/Bat.tscn")
 const BACKGROUND := preload("res://assets/Old Dungeon/OldDungeon320X180.png")
 
+const GROUND_Y := 330.0   # everyone's feet go here
+const PLAYER_X := 100.0
+const PLAYER_SCALE := Vector2(2.5, 2.5)
+const BAR_SCALE := 1.1
+const BAR_WIDTH := 84.0 * BAR_SCALE   # texture is 84 px wide at scale 1
+
 var _manager := CombatManager.new()
 var _player: Player
 var _player_sprite: AnimatedSprite2D
@@ -53,12 +59,14 @@ func _build_scene(encounter: EncounterData) -> void:
 	panel.size = Vector2(640, 120)
 	add_child(panel)
 
-	_player_sprite = _make_fighter(Vector2(170, 195), false, Color.WHITE)
-	_player_bar = _make_bar(Vector2(100, 305))
-	_player_hp_label = _make_bar_label(Vector2(100, 322))
+	_player_sprite = _make_fighter(PLAYER_X, false, Color.WHITE)
+	var player_body := _body_rect_world(_player_sprite)
+	var bar_x := PLAYER_X - BAR_WIDTH / 2.0
+	_player_bar = _make_bar(Vector2(bar_x, GROUND_Y + 8))
+	_player_hp_label = _make_bar_label(Vector2(bar_x, GROUND_Y + 16))
 	var name_p := Label.new()
 	name_p.text = _player.combatant_name
-	name_p.position = Vector2(100, 280)
+	name_p.position = Vector2(bar_x, player_body.position.y - 22)
 	name_p.add_theme_color_override("font_outline_color", Color.BLACK)
 	name_p.add_theme_constant_override("outline_size", 6)
 	add_child(name_p)
@@ -96,49 +104,78 @@ func _build_scene(encounter: EncounterData) -> void:
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_fade)
 
-func _enemy_positions(count: int) -> Array[Vector2]:
-	var positions: Array[Vector2] = []
+func _enemy_positions(count: int) -> Array[float]:
+	var xs: Array[float] = []
 	match count:
-		1:
-			positions.append(Vector2(470, 195))
+		1: xs.append(470.0)
 		2:
-			positions.append(Vector2(430, 155))
-			positions.append(Vector2(520, 220))
+			xs.append(360.0)
+			xs.append(500.0)
 		_:
-			positions.append(Vector2(400, 145))
-			positions.append(Vector2(490, 195))
-			positions.append(Vector2(400, 250))
-	return positions
+			xs.append(290.0)
+			xs.append(420.0)
+			xs.append(550.0)
+	return xs
 
-func _make_fighter(pos: Vector2, flip: bool, tint: Color) -> AnimatedSprite2D:
+#
+func _body_rect(sprite: AnimatedSprite2D) -> Rect2:
+	var s := sprite.scale.abs()
+	var frames := sprite.sprite_frames
+	if frames == null or not frames.has_animation("Idle"):
+		return Rect2(Vector2(-20, -40) * s, Vector2(40, 80) * s)
+	var union := Rect2i()
+	var size := Vector2.ZERO
+	for i in frames.get_frame_count("Idle"):
+		var tex := frames.get_frame_texture("Idle", i)
+		size = tex.get_size()
+		var used := tex.get_image().get_used_rect()
+		union = used if i == 0 else union.merge(used)
+	return Rect2((Vector2(union.position) - size / 2.0) * s, Vector2(union.size) * s)
+
+
+func _body_rect_world(sprite: AnimatedSprite2D) -> Rect2:
+	var rect := _body_rect(sprite)
+	rect.position += sprite.get_parent().get_parent().position
+	return rect
+
+#put people on floor
+func _stand_on_ground(root: Node2D, sprite: AnimatedSprite2D, x: float) -> void:
+	root.position = Vector2(x, GROUND_Y - _body_rect(sprite).end.y)
+
+#place the swordsman
+func _make_fighter(x: float, flip: bool, tint: Color) -> AnimatedSprite2D:
 	var root: Node2D = SWORDSMAN.instantiate()
-	root.position = pos
 	add_child(root)
 	var sprite: AnimatedSprite2D = root.get_node("CharacterBody2D/AnimatedSprite2D")
-	sprite.scale = Vector2(3, 3)
+	sprite.scale = PLAYER_SCALE
 	sprite.flip_h = flip
 	sprite.modulate = tint
 	sprite.play("Idle")
+	_stand_on_ground(root, sprite, x) #replaced the earlier position thing
 	return sprite
 
-func _make_enemy_slot(index: int, data: EnemyData, enemy: Enemy, pos: Vector2) -> Dictionary:
+func _make_enemy_slot(index: int, data: EnemyData, enemy: Enemy, x: float) -> Dictionary:
 	var packed := FALLBACK_ENEMY
 	if data.scene_path != "" and ResourceLoader.exists(data.scene_path):
 		packed = load(data.scene_path) as PackedScene
 	var root: Node2D = packed.instantiate()
-	root.position = pos
 	add_child(root)
 	var sprite: AnimatedSprite2D = root.get_node("CharacterBody2D/AnimatedSprite2D")
 	sprite.scale = data.sprite_scale
 	sprite.flip_h = data.flip_h
 	sprite.modulate = data.tint
 	sprite.play("Idle")
+	_stand_on_ground(root, sprite, x)
+	root.position.y -= data.hover_height
+	var body := _body_rect_world(sprite)
 
-	var bar := _make_bar(pos + Vector2(-70, 85))
-	var hp_label := _make_bar_label(pos + Vector2(-70, 102))
+
+	var bar_x := x - BAR_WIDTH / 2.0
+	var bar := _make_bar(Vector2(bar_x, GROUND_Y + 8))
+	var hp_label := _make_bar_label(Vector2(bar_x, GROUND_Y + 16))
 	var name_e := Label.new()
 	name_e.text = enemy.combatant_name
-	name_e.position = pos + Vector2(-70, 65)
+	name_e.position = Vector2(bar_x, body.position.y - 22)
 	name_e.add_theme_color_override("font_outline_color", Color.BLACK)
 	name_e.add_theme_constant_override("outline_size", 6)
 	add_child(name_e)
@@ -146,9 +183,9 @@ func _make_enemy_slot(index: int, data: EnemyData, enemy: Enemy, pos: Vector2) -
 	var hit := Button.new()
 	hit.flat = true
 	hit.focus_mode = Control.FOCUS_NONE
-	hit.position = pos + Vector2(-55, -70)
-	hit.custom_minimum_size = Vector2(110, 130)
-	hit.size = Vector2(110, 130)
+	hit.position = body.position - Vector2(6, 6)
+	hit.size = body.size + Vector2(12, 12)
+	hit.custom_minimum_size = hit.size
 	hit.self_modulate.a = 0.0
 	hit.pressed.connect(_on_enemy_clicked.bind(index))
 	add_child(hit)
@@ -169,7 +206,7 @@ func _make_bar(pos: Vector2) -> TextureProgressBar:
 	bar.texture_under = preload("res://assets/UI/healthbar.tres")
 	bar.texture_progress = preload("res://assets/UI/healthbar_progress.tres")
 	bar.texture_progress_offset = Vector2(2, 2)
-	bar.scale = Vector2(1.5, 1.5)
+	bar.scale = Vector2(BAR_SCALE, BAR_SCALE)
 	add_child(bar)
 	return bar
 

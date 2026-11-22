@@ -8,5 +8,6 @@ enemy_name = "Bat"
 health = 4
 tint = Color(1, 0.6, 0.6, 1)
 scene_path = "res://Combatant/Enemy/Bat.tscn"
-sprite_scale = Vector2(2, 2)
+sprite_scale = Vector2(1.75, 1.75)
+hover_height = 40.0
 flip_h = false
