@@ -159,7 +159,7 @@ func _refresh_skill_buttons() -> void:
 		var button: Button = _skill_buttons.get(skill.skill_id)
 		if button == null:
 			continue
-		var left := _player.cooldown_remaining(skill)
+		var left: int = _player.cooldown_remaining(skill)
 		button.disabled = left > 0
 		button.text = skill.display_name if left == 0 else "%s  (CD %d)" % [skill.display_name, left]
 

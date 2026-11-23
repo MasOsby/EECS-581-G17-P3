@@ -4,6 +4,7 @@ extends Node
 ## state_changed signal.
 
 signal state_changed(new_state)
+signal skill_points_changed(points: int)
 enum State { MAIN_MENU, MAP, COMBAT, VICTORY, DEATH, SKILLS }
 
 var state: State = State.MAIN_MENU
