@@ -80,14 +80,14 @@ func _build_scene(encounter: EncounterData) -> void:
 	var player_body := _body_rect_world(_player_sprite)
 	var bar_x := PLAYER_X - BAR_WIDTH / 2.0
 	_player_bar = _make_bar(Vector2(bar_x, GROUND_Y + 8), BAR_TEXTURE, HEALTHBAR_PROGRESS)
-	_player_hp_label = _make_bar_label(Vector2(bar_x, GROUND_Y + 16), _player_bar)
+	_player_hp_label = _make_bar_label(Vector2(bar_x, GROUND_Y + 16))
 
 	#Swordsman xp bar (vertical on edge of screen)
 	_player_xp = _make_bar(Vector2(20,310), BAR_TEXTURE, XP_BAR_PROGRESS)
 	_player_xp.fill_mode = TextureProgressBar.FILL_LEFT_TO_RIGHT
 	_player_xp.texture_progress_offset = Vector2(7,1.5)
 	_player_xp.rotation_degrees = -90
-	_player_xp_label = _make_bar_label(Vector2(20, 320), _player_xp)
+	_player_xp_label = _make_bar_label(Vector2(20, 320))
 	
 	var name_p := Label.new()
 	name_p.text = _player.combatant_name
@@ -196,7 +196,7 @@ func _make_enemy_slot(index: int, data: EnemyData, enemy: Enemy, x: float) -> Di
 
 
 	var bar_x := x - BAR_WIDTH / 2.0
-	var bar := _make_bar(Vector2(bar_x, GROUND_Y + 8))
+	var bar := _make_bar(Vector2(bar_x, GROUND_Y + 8), BAR_TEXTURE, HEALTHBAR_PROGRESS)
 	var hp_label := _make_bar_label(Vector2(bar_x, GROUND_Y + 16))
 	var name_e := Label.new()
 	name_e.text = enemy.combatant_name
@@ -263,7 +263,7 @@ func _on_player_health_changed(current: int, maximum: int) -> void:
 
 func _on_enemy_health_changed(current: int, maximum: int, index: int) -> void:
 	var slot := _slots[index]
-	_update_bar(slot["bar"], slot["hp_label"], current, maximum)
+	_update_bar(slot["bar"], slot["hp_label"], current, maximum, "HP")
 	if current == 0:
 		_fade_enemy(index)
 		if _selected == index:
@@ -366,7 +366,8 @@ func _on_combat_finished(player_won: bool) -> void:
 			var enemy: Enemy = slot["enemy"]
 
 			#Enemy death animation
-			create_tween().tween_property(_enemy_sprite, "modulate:a", 0.0, 0.6)
+			var sprite: AnimatedSprite2D = slot["sprite"]
+			create_tween().tween_property(sprite, "modulate:a", 0.0, 0.6)
 
 			# Update player gold and XP
 			_player.gold += enemy.gold_reward
@@ -379,7 +380,7 @@ func _on_combat_finished(player_won: bool) -> void:
 		GameState.player_level = _player.level
 		GameState.player_skillpts = _player.skill_pts
 		
-		await get_tree().create_timer(2).timeout
+		await get_tree().create_timer(1).timeout
 		
 	else:
 		create_tween().tween_property(_player_sprite, "modulate:a", 0.0, 0.6)

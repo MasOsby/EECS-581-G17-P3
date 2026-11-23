@@ -36,7 +36,14 @@ func start_run(seed_value: int = -1) -> void:
 	visited = [0]
 	run_complete = false
 	map_intro_done = false
-	player_health = player_max_health
+	player_health = 10
+	player_max_health = 10	
+	player_gold=0
+	player_skillpts=0
+	player_xp=0
+	player_max_xp=0
+	player_level=1
+
 	change_state(State.MAP)
 
 func arrive_at(node_id: int) -> void:

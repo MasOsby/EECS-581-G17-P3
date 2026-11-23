@@ -12,3 +12,5 @@ tint = Color(1, 1, 1, 1)
 scene_path = "res://Combatant/Enemy/Ogre.tscn"
 sprite_scale = Vector2(2.2, 2.2)
 flip_h = false
+gold_reward = 8
+xp_reward = 12
