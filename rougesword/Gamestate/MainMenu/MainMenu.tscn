@@ -1,8 +1,8 @@
-[gd_scene format=3 uid="uid://82i5rfbx5tki"]
+[gd_scene load_steps=2 format=3 uid="uid://82i5rfbx5tki"]
 
-[ext_resource type="Script" uid="uid://c106qewy8kndr" path="res://Gamestate/MainMenu/main_menu.gd" id="1_r4b5n"]
+[ext_resource type="Script" path="res://Gamestate/MainMenu/main_menu.gd" id="1_r4b5n"]
 
-[node name="MainMenu" type="Control" unique_id=851898068]
+[node name="MainMenu" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0

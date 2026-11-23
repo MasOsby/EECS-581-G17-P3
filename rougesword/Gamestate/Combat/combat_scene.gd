@@ -26,6 +26,7 @@ var _turn_label: Label
 var _menu: PanelContainer
 var _fade: ColorRect
 var hud: CanvasLayer
+var _action_in_progress: bool = false
 
 func _ready() -> void:
 	var data := GameState.current_enemy_data()
@@ -188,16 +189,33 @@ func _play_attack(sprite: AnimatedSprite2D) -> void:
 	sprite.play("Idle")
 
 func _on_attack_pressed() -> void:
-	_menu.visible = false
+	if _action_in_progress or not _manager.can_use_move(CombatManager.attack_cost):
+		return
+
+	_action_in_progress = true
+	_menu.hide()
 	await _play_attack(_player_sprite)
 	_manager.player_attack()
-	if _manager.turn != CombatManager.Turn.ENEMY_TURN:
-		return  # combat finished
+	_action_in_progress = false
+
+	if _manager.turn == CombatManager.Turn.PLAYER_TURN:
+		_menu.show()
+
+func _on_end_turn_pressed() -> void:
+	if _action_in_progress or _manager.turn != CombatManager.Turn.PLAYER_TURN:
+		return
+
+	_action_in_progress = true
+	_menu.hide()
+	_manager.end_player_turn()
+
 	await get_tree().create_timer(0.5).timeout
 	await _play_attack(_enemy_sprite)
 	_manager.enemy_attack()
+
+	_action_in_progress = false
 	if _manager.turn == CombatManager.Turn.PLAYER_TURN:
-		_menu.visible = true
+		_menu.show()
 
 func _on_combat_finished(player_won: bool) -> void:
 	_update_turn_label()
