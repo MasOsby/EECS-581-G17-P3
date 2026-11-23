@@ -1,37 +1,39 @@
 extends Control
 ## Combat state: swordsman vs. one or more enemies. CombatManager runs the
-## turn loop; this scene owns sprites, bars, and target selection.
+## turn loop; this scene owns sprites, bars, the HUD, target selection and the
+## action menu (basic attack + unlocked skills with cooldowns).
 
 const SWORDSMAN := preload("res://Combatant/Player/Swordsman.tscn")
 const FALLBACK_ENEMY := preload("res://Combatant/Enemy/Bat.tscn")
 const BACKGROUND := preload("res://assets/Old Dungeon/OldDungeon320X180.png")
+const HUD := preload("res://UI/HUD/HUD.tscn")
+
+const BAR_TEXTURE := preload("res://assets/UI/healthbar.tres")
+const HEALTHBAR_PROGRESS := preload("res://assets/UI/healthbar_progress.tres")
+const XP_BAR_PROGRESS := preload("res://assets/UI/xp_progress.tres")
 
 const GROUND_Y := 330.0   # everyone's feet go here
 const PLAYER_X := 100.0
 const PLAYER_SCALE := Vector2(2.5, 2.5)
 const BAR_SCALE := 1.1
 const BAR_WIDTH := 84.0 * BAR_SCALE   # texture is 84 px wide at scale 1
-const HUD := preload("res://UI/HUD/HUD.tscn")
-
-const BAR_TEXTURE:= preload("res://assets/UI/healthbar.tres")
-const HEALTHBAR_PROGRESS := preload("res://assets/UI/healthbar_progress.tres")
-const XP_BAR_PROGRESS := preload("res://assets/UI/xp_progress.tres")
 
 var _manager := CombatManager.new()
 var _player: Player
 var _player_sprite: AnimatedSprite2D
 var _player_bar: TextureProgressBar
-var _enemy_bar: TextureProgressBar
+var _player_hp_label: Label
 var _player_xp: TextureProgressBar
 var _player_xp_label: Label
-var _player_hp_label: Label
 var _turn_label: Label
 var _menu: PanelContainer
+var _attack_button: Button
+var _skill_buttons: Dictionary = {}   # skill_id -> Button
+var hud: CanvasLayer
 var _hint: Label
 var _fade: ColorRect
 var _slots: Array[Dictionary] = []
 var _selected: int = 0
-var hud: CanvasLayer
 
 func _ready() -> void:
 	var encounter := GameState.current_encounter()
@@ -44,21 +46,22 @@ func _ready() -> void:
 	_manager.turn_changed.connect(_on_turn_changed)
 	_manager.combat_finished.connect(_on_combat_finished)
 	_player.health_changed.connect(_on_player_health_changed)
-	for i in wave.size():
-		wave[i].health_changed.connect(_on_enemy_health_changed.bind(i))
-
 	_player.xp_changed.connect(_on_player_xp_changed)
+	_player.cooldowns_changed.connect(_refresh_skill_buttons)
 
 	hud = HUD.instantiate()
 	add_child(hud)
 	hud.bind_player(_player)
 
+	for i in wave.size():
+		wave[i].health_changed.connect(_on_enemy_health_changed.bind(i))
+
 	_build_scene(encounter)
 	_update_bar(_player_bar, _player_hp_label, _player.health, _player.max_health, "HP")
+	_update_bar(_player_xp, _player_xp_label, _player.xp, _player.max_xp, "XP")
 	for i in _slots.size():
 		var enemy: Enemy = _slots[i]["enemy"]
 		_update_bar(_slots[i]["bar"], _slots[i]["hp_label"], enemy.health, enemy.max_health, "HP")
-	_update_bar(_player_xp, _player_xp_label, _player.xp, _player.max_xp, "XP")
 	_select_first_living()
 	_update_turn_label()
 
@@ -75,20 +78,17 @@ func _build_scene(encounter: EncounterData) -> void:
 	panel.size = Vector2(640, 120)
 	add_child(panel)
 
-
 	_player_sprite = _make_fighter(PLAYER_X, false, Color.WHITE)
 	var player_body := _body_rect_world(_player_sprite)
 	var bar_x := PLAYER_X - BAR_WIDTH / 2.0
-	_player_bar = _make_bar(Vector2(bar_x, GROUND_Y + 8), BAR_TEXTURE, HEALTHBAR_PROGRESS)
+	_player_bar = _make_bar(Vector2(bar_x, GROUND_Y + 8))
 	_player_hp_label = _make_bar_label(Vector2(bar_x, GROUND_Y + 16))
-
-	#Swordsman xp bar (vertical on edge of screen)
-	_player_xp = _make_bar(Vector2(20,310), BAR_TEXTURE, XP_BAR_PROGRESS)
+	# Swordsman xp bar (vertical on the left edge of the screen)
+	_player_xp = _make_bar(Vector2(20, 310), BAR_TEXTURE, XP_BAR_PROGRESS, 1.5)
 	_player_xp.fill_mode = TextureProgressBar.FILL_LEFT_TO_RIGHT
-	_player_xp.texture_progress_offset = Vector2(7,1.5)
+	_player_xp.texture_progress_offset = Vector2(7, 1.5)
 	_player_xp.rotation_degrees = -90
 	_player_xp_label = _make_bar_label(Vector2(20, 320))
-	
 	var name_p := Label.new()
 	name_p.text = _player.combatant_name
 	name_p.position = Vector2(bar_x, player_body.position.y - 22)
@@ -114,20 +114,54 @@ func _build_scene(encounter: EncounterData) -> void:
 	_hint.visible = encounter.enemies.size() > 1
 	add_child(_hint)
 
-	_menu = PanelContainer.new()
-	_menu.position = Vector2(20, 380)
-	var attack_button := Button.new()
-	attack_button.text = "Basic attack"
-	attack_button.custom_minimum_size = Vector2(150, 40)
-	attack_button.pressed.connect(_on_attack_pressed)
-	_menu.add_child(attack_button)
-	add_child(_menu)
+	_build_action_menu()
 
 	_fade = ColorRect.new()
 	_fade.color = Color(0, 0, 0, 0)
 	_fade.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_fade)
+
+## Basic attack plus one button per unlocked skill. Skills on cooldown are
+## disabled and show the turns remaining.
+func _build_action_menu() -> void:
+	_menu = PanelContainer.new()
+	_menu.position = Vector2(20, 374)
+	var grid := GridContainer.new()
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 4)
+	grid.add_theme_constant_override("v_separation", 4)
+	_menu.add_child(grid)
+
+	_attack_button = _make_action_button("Basic attack")
+	_attack_button.pressed.connect(_on_attack_pressed)
+	grid.add_child(_attack_button)
+
+	for skill in _player.unlocked_skills:
+		var button := _make_action_button(skill.display_name)
+		button.icon = skill.icon
+		button.tooltip_text = "%s\nCooldown: %d turn(s)" % [skill.description, skill.cooldown]
+		button.pressed.connect(_on_skill_pressed.bind(skill))
+		grid.add_child(button)
+		_skill_buttons[skill.skill_id] = button
+	add_child(_menu)
+	_refresh_skill_buttons()
+
+func _make_action_button(text: String) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.custom_minimum_size = Vector2(190, 34)
+	button.add_theme_constant_override("icon_max_width", 22)
+	return button
+
+func _refresh_skill_buttons() -> void:
+	for skill in _player.unlocked_skills:
+		var button: Button = _skill_buttons.get(skill.skill_id)
+		if button == null:
+			continue
+		var left := _player.cooldown_remaining(skill)
+		button.disabled = left > 0
+		button.text = skill.display_name if left == 0 else "%s  (CD %d)" % [skill.display_name, left]
 
 func _enemy_positions(count: int) -> Array[float]:
 	var xs: Array[float] = []
@@ -196,7 +230,7 @@ func _make_enemy_slot(index: int, data: EnemyData, enemy: Enemy, x: float) -> Di
 
 
 	var bar_x := x - BAR_WIDTH / 2.0
-	var bar := _make_bar(Vector2(bar_x, GROUND_Y + 8), BAR_TEXTURE, HEALTHBAR_PROGRESS)
+	var bar := _make_bar(Vector2(bar_x, GROUND_Y + 8))
 	var hp_label := _make_bar_label(Vector2(bar_x, GROUND_Y + 16))
 	var name_e := Label.new()
 	name_e.text = enemy.combatant_name
@@ -225,18 +259,13 @@ func _make_enemy_slot(index: int, data: EnemyData, enemy: Enemy, x: float) -> Di
 		"hit": hit,
 	}
 
-func _make_bar(pos: Vector2, under: Texture2D, progress: Texture2D) -> TextureProgressBar:
+func _make_bar(pos: Vector2, under: Texture2D = BAR_TEXTURE, progress: Texture2D = HEALTHBAR_PROGRESS, bar_scale: float = BAR_SCALE) -> TextureProgressBar:
 	var bar := TextureProgressBar.new()
 	bar.position = pos
-	
-	#Load texture progress bar sprites
 	bar.texture_under = under
 	bar.texture_progress = progress
-	
-	#Size and scale
-	bar.texture_progress_offset = Vector2(2,2)
-	bar.scale = Vector2(BAR_SCALE, BAR_SCALE)
-	
+	bar.texture_progress_offset = Vector2(2, 2)
+	bar.scale = Vector2(bar_scale, bar_scale)
 	add_child(bar)
 	return bar
 
@@ -248,11 +277,11 @@ func _make_bar_label(pos: Vector2) -> Label:
 	add_child(label)
 	return label
 
-func _update_bar(bar: TextureProgressBar, label: Label, current: int, maximum: int, text: String) -> void:
+func _update_bar(bar: TextureProgressBar, label: Label, current: int, maximum: int, prefix: String) -> void:
 	bar.max_value = maximum
 	bar.value = current
-	label.text = "%s %d / %d" % [text, current, maximum]
-	
+	label.text = "%s %d / %d" % [prefix, current, maximum]
+
 func _update_turn_label() -> void:
 	var who := "Swordsman's turn" if _manager.turn == CombatManager.Turn.PLAYER_TURN else "Enemy's turn"
 	_turn_label.text = "Turn %d - %s" % [_manager.turn_indicator, who]
@@ -260,6 +289,10 @@ func _update_turn_label() -> void:
 func _on_player_health_changed(current: int, maximum: int) -> void:
 	_update_bar(_player_bar, _player_hp_label, current, maximum, "HP")
 	GameState.player_health = current
+
+func _on_player_xp_changed(current: int, maximum: int) -> void:
+	_update_bar(_player_xp, _player_xp_label, current, maximum, "XP")
+	GameState.player_xp = current
 
 func _on_enemy_health_changed(current: int, maximum: int, index: int) -> void:
 	var slot := _slots[index]
@@ -313,19 +346,17 @@ func _refresh_selection() -> void:
 			sprite.modulate = Color(data.tint.r, data.tint.g, data.tint.b, alpha)
 			name_label.modulate = Color.WHITE
 
-func _on_player_xp_changed(current: int, maximum: int) -> void:
-	_update_bar(_player_xp, _player_xp_label, current, maximum, "XP")
-	GameState.player_xp = current
-
-
 func _on_turn_changed(_turn: CombatManager.Turn) -> void:
 	_update_turn_label()
+	_refresh_skill_buttons()
 
-func _play_attack(sprite: AnimatedSprite2D) -> void:
-	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation("Attack"):
-		var frames := sprite.sprite_frames.get_frame_count("Attack")
-		var fps := maxf(sprite.sprite_frames.get_animation_speed("Attack"), 1.0)
-		sprite.play("Attack")
+func _play_attack(sprite: AnimatedSprite2D, animation: StringName = &"Attack") -> void:
+	if sprite.sprite_frames != null and not sprite.sprite_frames.has_animation(animation):
+		animation = &"Attack"
+	if sprite.sprite_frames != null and sprite.sprite_frames.has_animation(animation):
+		var frames := sprite.sprite_frames.get_frame_count(animation)
+		var fps := maxf(sprite.sprite_frames.get_animation_speed(animation), 1.0)
+		sprite.play(animation)
 		await get_tree().create_timer(frames / fps).timeout
 	else:
 		await get_tree().create_timer(0.45).timeout
@@ -333,17 +364,42 @@ func _play_attack(sprite: AnimatedSprite2D) -> void:
 		sprite.play("Idle")
 
 func _on_attack_pressed() -> void:
-	if _manager.turn != CombatManager.Turn.PLAYER_TURN or _selected < 0:
+	var target := _selected_target()
+	if target == null:
 		return
+	await _take_player_action(&"Attack", func(): _manager.player_attack(target))
+
+func _on_skill_pressed(skill: SkillData) -> void:
+	if _manager.turn != CombatManager.Turn.PLAYER_TURN or not _player.is_skill_ready(skill):
+		return
+	var target: Enemy = null
+	if not skill.hits_all_enemies:
+		target = _selected_target()
+		if target == null:
+			return
+	await _take_player_action(skill.animation, func(): _manager.player_use_skill(skill, target))
+
+## The enemy currently selected for targeting, or null if it can't be attacked.
+func _selected_target() -> Enemy:
+	if _manager.turn != CombatManager.Turn.PLAYER_TURN or _selected < 0:
+		return null
 	var target: Enemy = _slots[_selected]["enemy"]
 	if not target.alive:
 		_select_first_living()
-		return
+		return null
+	return target
+
+## Plays the swordsman's animation, runs `action` (a CombatManager call), then
+## lets every living enemy act and hands the turn back.
+func _take_player_action(animation: StringName, action: Callable) -> void:
 	_menu.visible = false
-	await _play_attack(_player_sprite)
-	_manager.player_attack(target)
-	if _manager.turn != CombatManager.Turn.ENEMY_TURN:
+	await _play_attack(_player_sprite, animation)
+	action.call()
+	if _manager.turn == CombatManager.Turn.PLAYER_TURN:
+		_menu.visible = true   # the action was refused; nothing was spent
 		return
+	if _manager.turn != CombatManager.Turn.ENEMY_TURN:
+		return  # combat finished
 	await get_tree().create_timer(0.35).timeout
 	for slot in _slots:
 		var enemy: Enemy = slot["enemy"]
@@ -360,28 +416,11 @@ func _on_attack_pressed() -> void:
 
 func _on_combat_finished(player_won: bool) -> void:
 	_update_turn_label()
+	_menu.visible = false
 	if player_won:
-		#Update Player gold and xp
-		for slot in _slots:
-			var enemy: Enemy = slot["enemy"]
-
-			#Enemy death animation
-			var sprite: AnimatedSprite2D = slot["sprite"]
-			create_tween().tween_property(sprite, "modulate:a", 0.0, 0.6)
-
-			# Update player gold and XP
-			_player.gold += enemy.gold_reward
-			_player.gain_xp(enemy.xp_reward)
-		
-		#Persist Player stats across encounters
-		GameState.player_gold = _player.gold
-		GameState.player_xp = _player.xp
-		GameState.player_max_xp = _player.max_xp
-		GameState.player_level = _player.level
-		GameState.player_skillpts = _player.skill_pts
-		
-		await get_tree().create_timer(1).timeout
-		
+		# Enemies fade out as they die (see _on_enemy_health_changed).
+		_award_rewards()
+		await get_tree().create_timer(2).timeout   # let the XP bar settle
 	else:
 		create_tween().tween_property(_player_sprite, "modulate:a", 0.0, 0.6)
 	await get_tree().create_timer(0.9).timeout
@@ -392,3 +431,20 @@ func _on_combat_finished(player_won: bool) -> void:
 		GameState.change_state(GameState.State.VICTORY)
 	else:
 		GameState.change_state(GameState.State.DEATH)
+
+## Gold and XP from every enemy in the encounter, saved for the next fight.
+func _award_rewards() -> void:
+	var gold := 0
+	var xp := 0
+	for enemy in _manager.enemies:
+		gold += enemy.gold_reward
+		xp += enemy.xp_reward
+	_player.gold += gold
+	_player.gain_xp(xp)
+
+	#Persist Player stats across encounters
+	GameState.player_gold = _player.gold
+	GameState.player_xp = _player.xp
+	GameState.player_max_xp = _player.max_xp
+	GameState.player_level = _player.level
+	GameState.player_skillpts = _player.skill_pts

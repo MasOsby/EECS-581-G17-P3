@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="SkillData" format=3]
+
+[ext_resource type="Script" path="res://UI/Skills/data/skill_data.gd" id="1_skill"]
+[ext_resource type="Texture2D" path="res://UI/Skills/Attack/Execute.tres" id="2_icon"]
+
+[resource]
+script = ExtResource("1_skill")
+skill_id = &"execute"
+display_name = "Execute"
+description = "Finish off a target at 30% health or less. Otherwise a normal hit."
+icon = ExtResource("2_icon")
+point_cost = 1
+cooldown = 4
+damage_multiplier = 1.0
+hits = 1
+hits_all_enemies = false
+execute_threshold = 0.3
+animation = &"Attack"

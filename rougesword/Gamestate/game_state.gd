@@ -21,8 +21,9 @@ var player_health: int = 10
 var player_gold: int = 0
 var player_skillpts: int = 0
 var player_xp: int = 0
-var player_max_xp: int = 0
+var player_max_xp: int = 10
 var player_level: int = 1
+var player_skills: Array[SkillData] = []
 
 ## Starts a run. Pass a seed to replay a map; otherwise a random one is chosen.
 func start_run(seed_value: int = -1) -> void:
@@ -36,14 +37,7 @@ func start_run(seed_value: int = -1) -> void:
 	visited = [0]
 	run_complete = false
 	map_intro_done = false
-	player_health = 10
-	player_max_health = 10	
-	player_gold=0
-	player_skillpts=0
-	player_xp=0
-	player_max_xp=0
-	player_level=1
-
+	reset_player_progress()
 	change_state(State.MAP)
 
 func arrive_at(node_id: int) -> void:
@@ -55,5 +49,30 @@ func change_state(new_state: State) -> void:
 	state = new_state
 	state_changed.emit(new_state)
 
+func reset_player_progress() -> void:
+	player_health = player_max_health
+	player_gold = 0
+	player_skillpts = 0
+	player_xp = 0
+	player_max_xp = 10
+	player_level = 1
+	player_skills.clear()
+
 func current_encounter() -> EncounterData:
 	return load(map.nodes[current_node].encounter_path) as EncounterData
+
+func has_skill(skill: SkillData) -> bool:
+	for owned in player_skills:
+		if owned.skill_id == skill.skill_id:
+			return true
+	return false
+
+func try_unlock_skill(skill: SkillData) -> bool:
+	if has_skill(skill):
+		return true
+	if player_skillpts < skill.point_cost:
+		return false
+	player_skillpts -= skill.point_cost
+	player_skills.append(skill)
+	skill_points_changed.emit(player_skillpts)
+	return true
