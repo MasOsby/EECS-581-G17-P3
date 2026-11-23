@@ -11,7 +11,32 @@ const NODE_SPAWN_CHANCE := 0.75
 const JITTER_X := 16.0
 const JITTER_Y := 14.0
 const TYPE_WEIGHTS := {"fight": 60, "shop": 25, "rest": 15}
-const ENEMY_POOL := ["res://Combatant/Enemy/data/enemy_bat.tres"]
+
+const FIRST_ENCOUNTER := "res://Combatant/Enemy/encounters/one_bat.tres"
+# Can switch to test an encounter.
+#const FIRST_ENCOUNTER := "res://Combatant/Enemy/encounters/three_brutes.tres"
+#const FIRST_ENCOUNTER := "res://Combatant/Enemy/encounters/brute_and_bat.tres"
+
+
+## Encounters now use an attached difficulty value present in the encounter's .tres file
+## That difficulty is used to roll an encounter near difficulty that current stage should have.
+const ENCOUNTER_PATHS := [
+	"res://Combatant/Enemy/encounters/one_bat.tres",
+	"res://Combatant/Enemy/encounters/two_bats.tres",
+	"res://Combatant/Enemy/encounters/one_brute.tres",
+	"res://Combatant/Enemy/encounters/three_bats.tres",
+	"res://Combatant/Enemy/encounters/brute_and_bat.tres",
+	"res://Combatant/Enemy/encounters/two_brutes.tres",
+]
+
+##Encounters are selected by tier vs difficulty within a range
+const TARGET_START := 1.0   # target difficulty at tier 1
+const TARGET_STEP := 0.6    # extra difficulty per tier; the main number to tune
+const DIFFICULTY_RANGE := 0.9
+
+func _target_difficulty(tier: int) -> float:
+	return TARGET_START + (tier - 1) * TARGET_STEP
+
 
 var map_seed: int = 0
 var tier_count: int = 0
@@ -39,7 +64,7 @@ func _build(seed_value: int) -> void:
 	_connect_tiers()
 	repair()
 	_assign_types()
-	_assign_enemies()
+	_assign_encounters()
 	var problems := validate()
 	if not problems.is_empty():
 		push_error("Map for seed %d is invalid: %s" % [seed_value, ", ".join(problems)])
@@ -287,14 +312,34 @@ func _ensure_shop() -> void:
 	var pick: int = candidates[_rng.randi_range(0, candidates.size() - 1)]
 	nodes[pick].type = "shop"
 
-func _assign_enemies() -> void:
+func _assign_encounters() -> void:
 	for n in nodes:
 		if n.type == "fight":
-			n.enemy_path = ENEMY_POOL[_rng.randi_range(0, ENEMY_POOL.size() - 1)]
+			# Always make first fight 1 bat
+			if n.tier == 1:
+				n.encounter_path = FIRST_ENCOUNTER
+			else:
+				n.encounter_path = _roll_encounter(n.tier)
+
+func _roll_encounter(tier: int) -> String:
+	var target := _target_difficulty(tier)
+	var candidates: Array[String] = []
+	var nearest := String(ENCOUNTER_PATHS[0])
+	var nearest_gap := INF
+	for path in ENCOUNTER_PATHS:
+		var gap := absf((load(path) as EncounterData).difficulty - target)
+		if gap <= DIFFICULTY_RANGE:
+			candidates.append(path)
+		if gap < nearest_gap:
+			nearest_gap = gap
+			nearest = path
+	if candidates.is_empty():
+		return nearest
+	return candidates[_rng.randi_range(0, candidates.size() - 1)]
 
 ## Text fingerprint of the whole map, used to compare two maps for equality.
 func signature() -> String:
 	var parts := PackedStringArray(["%d|%d" % [tier_count, lane_count]])
 	for n in nodes:
-		parts.append("%d:%s:%s:%s" % [n.id, n.type, n.enemy_path, str(n.next)])
+		parts.append("%d:%s:%s:%s" % [n.id, n.type, n.encounter_path, str(n.next)])
 	return ";".join(parts)

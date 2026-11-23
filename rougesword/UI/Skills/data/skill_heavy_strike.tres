@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SkillData" format=3 uid="uid://beq6fa364kfce"]
+
+[ext_resource type="Script" uid="uid://duhipaop1wo27" path="res://UI/Skills/data/skill_data.gd" id="1_skill"]
+[ext_resource type="Texture2D" uid="uid://b2ikul55wlkfk" path="res://UI/Skills/Attack/HeavyStrike.tres" id="2_icon"]
+
+[resource]
+script = ExtResource("1_skill")
+skill_id = &"heavy_strike"
+display_name = "Heavy Strike"
+description = "A powerful blow for double damage."
+icon = ExtResource("2_icon")
+damage_multiplier = 2.0
+animation = &"Attack_2"

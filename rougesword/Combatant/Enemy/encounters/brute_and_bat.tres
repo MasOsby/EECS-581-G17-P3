@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="EncounterData" format=3 uid="uid://cencbrutebat00"]
+
+[ext_resource type="Script" uid="uid://bencountern0data" path="res://Combatant/Enemy/encounters/encounter_data.gd" id="1_script"]
+[ext_resource type="Resource" uid="uid://denemyogrebrute1" path="res://Combatant/Enemy/data/enemy_ogre.tres" id="2_ogre"]
+[ext_resource type="Resource" uid="uid://dx43vh6avbhi4" path="res://Combatant/Enemy/data/enemy_bat.tres" id="3_bat"]
+
+[resource]
+script = ExtResource("1_script")
+encounter_name = "Ogre and Bat"
+difficulty = 3.2
+enemies = Array[EnemyData]([ExtResource("2_ogre"), ExtResource("3_bat")])

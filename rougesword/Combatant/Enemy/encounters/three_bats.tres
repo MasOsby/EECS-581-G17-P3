@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="EncounterData" format=3]
+
+[ext_resource type="Script" path="res://Combatant/Enemy/encounters/encounter_data.gd" id="1_script"]
+[ext_resource type="Resource" path="res://Combatant/Enemy/data/enemy_bat.tres" id="2_bat"]
+
+[resource]
+script = ExtResource("1_script")
+encounter_name = "3 Bats"
+difficulty = 3.0
+enemies = Array[EnemyData]([ExtResource("2_bat"), ExtResource("2_bat"), ExtResource("2_bat")])
