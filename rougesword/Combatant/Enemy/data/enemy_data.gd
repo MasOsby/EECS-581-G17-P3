@@ -12,3 +12,7 @@ extends Resource
 @export var flip_h: bool = false
 @export var difficulty_cost: float = 1.0
 @export var hover_height: float = 0.0   # pixels above the ground line, for enemies that float like bat
+
+#Init enemy drops
+@export var gold_reward: int = 1
+@export var xp_reward: int = 1

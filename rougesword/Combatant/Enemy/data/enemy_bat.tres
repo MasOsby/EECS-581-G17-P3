@@ -11,3 +11,5 @@ scene_path = "res://Combatant/Enemy/Bat.tscn"
 sprite_scale = Vector2(1.75, 1.75)
 hover_height = 40.0
 flip_h = false
+gold_reward = 3
+xp_reward = 5

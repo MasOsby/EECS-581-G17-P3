@@ -11,11 +11,19 @@ const PLAYER_X := 100.0
 const PLAYER_SCALE := Vector2(2.5, 2.5)
 const BAR_SCALE := 1.1
 const BAR_WIDTH := 84.0 * BAR_SCALE   # texture is 84 px wide at scale 1
+const HUD := preload("res://UI/HUD/HUD.tscn")
+
+const BAR_TEXTURE:= preload("res://assets/UI/healthbar.tres")
+const HEALTHBAR_PROGRESS := preload("res://assets/UI/healthbar_progress.tres")
+const XP_BAR_PROGRESS := preload("res://assets/UI/xp_progress.tres")
 
 var _manager := CombatManager.new()
 var _player: Player
 var _player_sprite: AnimatedSprite2D
 var _player_bar: TextureProgressBar
+var _enemy_bar: TextureProgressBar
+var _player_xp: TextureProgressBar
+var _player_xp_label: Label
 var _player_hp_label: Label
 var _turn_label: Label
 var _menu: PanelContainer
@@ -23,6 +31,7 @@ var _hint: Label
 var _fade: ColorRect
 var _slots: Array[Dictionary] = []
 var _selected: int = 0
+var hud: CanvasLayer
 
 func _ready() -> void:
 	var encounter := GameState.current_encounter()
@@ -38,11 +47,18 @@ func _ready() -> void:
 	for i in wave.size():
 		wave[i].health_changed.connect(_on_enemy_health_changed.bind(i))
 
+	_player.xp_changed.connect(_on_player_xp_changed)
+
+	hud = HUD.instantiate()
+	add_child(hud)
+	hud.bind_player(_player)
+
 	_build_scene(encounter)
-	_update_bar(_player_bar, _player_hp_label, _player.health, _player.max_health)
+	_update_bar(_player_bar, _player_hp_label, _player.health, _player.max_health, "HP")
 	for i in _slots.size():
 		var enemy: Enemy = _slots[i]["enemy"]
-		_update_bar(_slots[i]["bar"], _slots[i]["hp_label"], enemy.health, enemy.max_health)
+		_update_bar(_slots[i]["bar"], _slots[i]["hp_label"], enemy.health, enemy.max_health, "HP")
+	_update_bar(_player_xp, _player_xp_label, _player.xp, _player.max_xp, "XP")
 	_select_first_living()
 	_update_turn_label()
 
@@ -59,11 +75,20 @@ func _build_scene(encounter: EncounterData) -> void:
 	panel.size = Vector2(640, 120)
 	add_child(panel)
 
+
 	_player_sprite = _make_fighter(PLAYER_X, false, Color.WHITE)
 	var player_body := _body_rect_world(_player_sprite)
 	var bar_x := PLAYER_X - BAR_WIDTH / 2.0
-	_player_bar = _make_bar(Vector2(bar_x, GROUND_Y + 8))
-	_player_hp_label = _make_bar_label(Vector2(bar_x, GROUND_Y + 16))
+	_player_bar = _make_bar(Vector2(bar_x, GROUND_Y + 8), BAR_TEXTURE, HEALTHBAR_PROGRESS)
+	_player_hp_label = _make_bar_label(Vector2(bar_x, GROUND_Y + 16), _player_bar)
+
+	#Swordsman xp bar (vertical on edge of screen)
+	_player_xp = _make_bar(Vector2(20,310), BAR_TEXTURE, XP_BAR_PROGRESS)
+	_player_xp.fill_mode = TextureProgressBar.FILL_LEFT_TO_RIGHT
+	_player_xp.texture_progress_offset = Vector2(7,1.5)
+	_player_xp.rotation_degrees = -90
+	_player_xp_label = _make_bar_label(Vector2(20, 320), _player_xp)
+	
 	var name_p := Label.new()
 	name_p.text = _player.combatant_name
 	name_p.position = Vector2(bar_x, player_body.position.y - 22)
@@ -200,13 +225,18 @@ func _make_enemy_slot(index: int, data: EnemyData, enemy: Enemy, x: float) -> Di
 		"hit": hit,
 	}
 
-func _make_bar(pos: Vector2) -> TextureProgressBar:
+func _make_bar(pos: Vector2, under: Texture2D, progress: Texture2D) -> TextureProgressBar:
 	var bar := TextureProgressBar.new()
 	bar.position = pos
-	bar.texture_under = preload("res://assets/UI/healthbar.tres")
-	bar.texture_progress = preload("res://assets/UI/healthbar_progress.tres")
-	bar.texture_progress_offset = Vector2(2, 2)
+	
+	#Load texture progress bar sprites
+	bar.texture_under = under
+	bar.texture_progress = progress
+	
+	#Size and scale
+	bar.texture_progress_offset = Vector2(2,2)
 	bar.scale = Vector2(BAR_SCALE, BAR_SCALE)
+	
 	add_child(bar)
 	return bar
 
@@ -218,17 +248,17 @@ func _make_bar_label(pos: Vector2) -> Label:
 	add_child(label)
 	return label
 
-func _update_bar(bar: TextureProgressBar, label: Label, current: int, maximum: int) -> void:
+func _update_bar(bar: TextureProgressBar, label: Label, current: int, maximum: int, text: String) -> void:
 	bar.max_value = maximum
 	bar.value = current
-	label.text = "HP %d / %d" % [current, maximum]
-
+	label.text = "%s %d / %d" % [text, current, maximum]
+	
 func _update_turn_label() -> void:
 	var who := "Swordsman's turn" if _manager.turn == CombatManager.Turn.PLAYER_TURN else "Enemy's turn"
 	_turn_label.text = "Turn %d - %s" % [_manager.turn_indicator, who]
 
 func _on_player_health_changed(current: int, maximum: int) -> void:
-	_update_bar(_player_bar, _player_hp_label, current, maximum)
+	_update_bar(_player_bar, _player_hp_label, current, maximum, "HP")
 	GameState.player_health = current
 
 func _on_enemy_health_changed(current: int, maximum: int, index: int) -> void:
@@ -283,6 +313,11 @@ func _refresh_selection() -> void:
 			sprite.modulate = Color(data.tint.r, data.tint.g, data.tint.b, alpha)
 			name_label.modulate = Color.WHITE
 
+func _on_player_xp_changed(current: int, maximum: int) -> void:
+	_update_bar(_player_xp, _player_xp_label, current, maximum, "XP")
+	GameState.player_xp = current
+
+
 func _on_turn_changed(_turn: CombatManager.Turn) -> void:
 	_update_turn_label()
 
@@ -325,8 +360,28 @@ func _on_attack_pressed() -> void:
 
 func _on_combat_finished(player_won: bool) -> void:
 	_update_turn_label()
-	_menu.visible = false
-	if not player_won:
+	if player_won:
+		#Update Player gold and xp
+		for slot in _slots:
+			var enemy: Enemy = slot["enemy"]
+
+			#Enemy death animation
+			create_tween().tween_property(_enemy_sprite, "modulate:a", 0.0, 0.6)
+
+			# Update player gold and XP
+			_player.gold += enemy.gold_reward
+			_player.gain_xp(enemy.xp_reward)
+		
+		#Persist Player stats across encounters
+		GameState.player_gold = _player.gold
+		GameState.player_xp = _player.xp
+		GameState.player_max_xp = _player.max_xp
+		GameState.player_level = _player.level
+		GameState.player_skillpts = _player.skill_pts
+		
+		await get_tree().create_timer(2).timeout
+		
+	else:
 		create_tween().tween_property(_player_sprite, "modulate:a", 0.0, 0.6)
 	await get_tree().create_timer(0.9).timeout
 	var tween := create_tween()

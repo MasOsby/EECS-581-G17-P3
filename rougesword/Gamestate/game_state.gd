@@ -13,8 +13,16 @@ var current_node: int = 0          # id of the node the swordsman is standing on
 var visited: Array[int] = [0]
 var run_complete: bool = false     # true once the boss node is reached
 var map_intro_done: bool = false   # the map's scroll-down intro plays once per run
+
+#Player stats carried over between encounters
 var player_max_health: int = 10
 var player_health: int = 10
+
+var player_gold: int = 0
+var player_skillpts: int = 0
+var player_xp: int = 0
+var player_max_xp: int = 0
+var player_level: int = 1
 
 ## Starts a run. Pass a seed to replay a map; otherwise a random one is chosen.
 func start_run(seed_value: int = -1) -> void:

@@ -5,6 +5,11 @@ class_name SkillNode
 @onready var label: Label = $MarginContainer/Label
 @onready var line_2d: Line2D = $Line2D
 
+#signal skill_unlocked(skill: SkillData)
+#
+#@export var skill_data: SkillData
+#@export var point_cost: int = 1
+
 func _ready():
 	if get_parent() is SkillNode:
 		line_2d.add_point(global_position + size / 2)
