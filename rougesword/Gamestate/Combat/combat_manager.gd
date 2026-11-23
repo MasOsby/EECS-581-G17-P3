@@ -1,6 +1,7 @@
 class_name CombatManager
 extends Node
-## Runs the turn loop. The swordsman acts once, then every living enemy acts.
+## Runs the turn loop. The swordsman acts once (basic attack or a skill), then
+## every living enemy acts. Skill cooldowns tick down once per round.
 ## Combat ends when the player dies or every enemy is dead.
 
 signal turn_changed(turn: Turn)
@@ -31,6 +32,27 @@ func player_attack(target: Enemy) -> void:
 	if turn != Turn.PLAYER_TURN or target == null or not target.alive:
 		return
 	player.attack(target)
+	_end_player_action()
+
+## Uses a skill. `target` is the selected enemy; skills that hit all enemies
+## ignore it. Returns false (and the turn is NOT spent) if the skill is on
+## cooldown, isn't one the player has unlocked, or there's nothing to hit.
+func player_use_skill(skill: SkillData, target: Enemy) -> bool:
+	if turn != Turn.PLAYER_TURN or skill == null:
+		return false
+	var targets: Array[Enemy] = []
+	if skill.hits_all_enemies:
+		targets = living_enemies()
+	elif target != null and target.alive:
+		targets.append(target)
+	if targets.is_empty():
+		return false
+	if not player.use_skill(skill, targets):
+		return false
+	_end_player_action()
+	return true
+
+func _end_player_action() -> void:
 	if all_enemies_dead():
 		_finish(true)
 	else:
@@ -47,6 +69,7 @@ func enemy_attack(attacker: Enemy) -> void:
 func end_enemy_round() -> void:
 	if turn != Turn.ENEMY_TURN:
 		return
+	player.tick_cooldowns()
 	turn_indicator += 1
 	turn = Turn.PLAYER_TURN
 	turn_changed.emit(turn)
