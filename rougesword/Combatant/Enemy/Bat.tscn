@@ -266,7 +266,7 @@ animations = [{
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="CharacterBody2D" unique_id=2076329874]
 position = Vector2(0.25, 0)
-scale = Vector2(0.98888886, 1)
+scale = Vector2(1, 1)
 sprite_frames = SubResource("SpriteFrames_i1jc4")
 animation = &"Attack"
 frame_progress = 0.43585023

@@ -13,6 +13,12 @@
 [ext_resource type="Texture2D" uid="uid://yb4vu57jqh5e" path="res://UI/Skills/Special/PoisonStrike.tres" id="11_2e6g7"]
 [ext_resource type="Texture2D" uid="uid://clnt1lyxb46m" path="res://UI/Skills/Special/Disarm.tres" id="12_ph8pw"]
 [ext_resource type="Script" uid="uid://dv5p2avsmmjw8" path="res://UI/Skills/back.gd" id="13_ha6vq"]
+[ext_resource type="Resource" path="res://UI/Skills/data/skill_heavy_strike.tres" id="sd_heavy"]
+[ext_resource type="Resource" path="res://UI/Skills/data/skill_titan_cleave.tres" id="sd_titan"]
+[ext_resource type="Resource" path="res://UI/Skills/data/skill_flurry.tres" id="sd_flurry"]
+[ext_resource type="Resource" path="res://UI/Skills/data/skill_execute.tres" id="sd_exec"]
+[ext_resource type="Resource" path="res://UI/Skills/data/skill_sweep.tres" id="sd_sweep"]
+[ext_resource type="Script" path="res://UI/Skills/skill_tree.gd" id="14_tree"]
 
 [node name="SkillTree" type="Control" unique_id=1337796242]
 layout_mode = 3
@@ -25,6 +31,7 @@ offset_right = 2.0
 offset_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("14_tree")
 
 [node name="Panel" type="Panel" parent="." unique_id=1683406314]
 layout_mode = 1
@@ -42,6 +49,7 @@ offset_top = 187.0
 offset_right = 544.0
 offset_bottom = 227.0
 texture_normal = ExtResource("5_dpvwx")
+skill_data = ExtResource("sd_heavy")
 
 [node name="Label2" type="Label" parent="Panel/HeavyStrike" unique_id=785979526]
 layout_mode = 0
@@ -59,8 +67,9 @@ offset_right = 41.0
 offset_bottom = -34.0
 disabled = true
 texture_normal = ExtResource("6_pa05u")
+skill_data = ExtResource("sd_titan")
 
-[node name="Flurry" parent="Panel/HeavyStrike/TitanCleave" unique_id=1923320788 instance=ExtResource("1_sksvy")]
+[node name="Execute" parent="Panel/HeavyStrike/TitanCleave" unique_id=1923320788 instance=ExtResource("1_sksvy")]
 layout_mode = 0
 offset_left = 46.0
 offset_top = -78.0
@@ -68,8 +77,9 @@ offset_right = 86.0
 offset_bottom = -38.0
 disabled = true
 texture_normal = ExtResource("7_kr7iy")
+skill_data = ExtResource("sd_exec")
 
-[node name="Execute" parent="Panel/HeavyStrike/TitanCleave" unique_id=1787700075 instance=ExtResource("1_sksvy")]
+[node name="Flurry" parent="Panel/HeavyStrike/TitanCleave" unique_id=1787700075 instance=ExtResource("1_sksvy")]
 layout_mode = 0
 offset_left = -54.0
 offset_top = -76.0
@@ -77,6 +87,7 @@ offset_right = -14.0
 offset_bottom = -36.0
 disabled = true
 texture_normal = ExtResource("8_7lu6p")
+skill_data = ExtResource("sd_flurry")
 
 [node name="Block" parent="Panel" unique_id=1218115956 instance=ExtResource("1_sksvy")]
 layout_mode = 0
@@ -127,6 +138,7 @@ offset_top = 415.0
 offset_right = 333.0
 offset_bottom = 455.0
 texture_normal = ExtResource("9_bcist")
+skill_data = ExtResource("sd_sweep")
 
 [node name="Label3" type="Label" parent="Panel/SweepStrike" unique_id=1449438360]
 layout_mode = 0
